@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<!-- uses current revision from r125  -  no old THREE.Geometry! -->
+<!-- see https://discourse.threejs.org/t/three-geometry-will-be-removed-from-core-with-r125/22401  -->
+<!-- The subfolders with images and models are enabled for access by means of a .htaccess file. -->
+<!-- See also https://discourse.threejs.org/t/dont-know-how-to-access-parametricgeometry-in-three-js/33031/7 -->
+<head>
+	<title> BeginnerExample  </title>
+	<meta charset="utf-8" />
+	<style>	
+	* { box-sizing:border-box; margin: 0; padding: 0 }
+	.main{ position: absolute; top: 0px }
+	.rg { position: absolute; top: 0px; z-index: 9 }
+	.header { position: absolute; top: 3vh; z-index: 6  }
+	.info { position: absolute; top: 6vh; z-index: 3 }
+	input[type="range"] { width: 100vw;	cursor: pointer; height: 0.3vh }
+	</style>
+</head>
+<body>	
+	<div id= "container" class="main"></div>	
+	<div id= "contRange" class="rg">  <input type="range" id="range" min="0" max="21" value="0" step="1" >  </div>
+	<div id= "header" class="header"> steps: </div>
+	<div id= "info" class="info"> Beginner Example <br /> @hofk - under construction 	
+    </div>
+    
+	<!-- // ======== to step 04 ========   - free video at Federico Maderno / Pixabay -->
+	<video id="video" loop crossOrigin="anonymous"  playsinline style="display:none" >	
+		<source src="Robin - 21375.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>	
+	</video>
+    
+	<!-- ... importmap indispensable as of revision 137 ................................................. -->  
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported   -   currently Firefox not yet-->
+	<script async src="./js/es-module-shims.js"></script>
+	<script type="importmap">
+		{
+			"imports": {
+				"three": "./js/three.module.js"
+			}
+		}    
+	</script>    
+	<!-- ................................................................................................ -->	
+</body>
+
+ <script type="module">
+ 
+// @author hofk
+
+window.addEventListener( "resize", onWindowResize, false );
+window.addEventListener( "mousemove", onWindowMousemove, false );
+const range = document.getElementById( 'range' );
+const container = document.getElementById( 'container' );
+createNumbers( 21 );  // mumbers for range
+
+// step 0:  three.js project setup - (import modules), scene, camera, renderer, clock, light ...
+//=================================================================================================
+    //import * as THREE from "https://threejs.org/build/three.module.js";       // old version up to r136 
+import * as THREE from 'three'; // imports only with <script type="module">     
+// Note: no THREE. in front of the name when using the modules!
+import { OrbitControls } from "./js/OrbitControls.js"; // for all steps
+import { GLTFLoader } from "./js/GLTFLoader.js";		// to step 03
+import { FontLoader } from './js/FontLoader.js';		// to step 11
+import { TextGeometry } from './js/TextGeometry.js'; // to step 11
+
+// see also the function animate( ) for all steps
+
+			// https://threejs.org/docs/index.html#api/en/scenes/Scene
+const scene = new THREE.Scene( );
+			// https://threejs.org/docs/index.html#api/en/cameras/PerspectiveCamera
+const camera = new THREE.PerspectiveCamera( 45, innerWidth / innerHeight, 0.1, 1000 );
+camera.position.set( -4, 0.6, 5 );
+			// https://threejs.org/docs/index.html#api/en/renderers/WebGLRenderer
+const renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setClearColor( 0x0099ff, 1 );	
+// const container = document.createElement( 'div' );
+document.body.appendChild( container );
+container.appendChild( renderer.domElement );
+			// https://threejs.org/docs/index.html#examples/en/controls/OrbitControls
+const controls = new OrbitControls( camera, renderer.domElement );
+
+// ... step 01:  buildt a plane and a figure with standard geometries ...
+//=================================================================================================
+			// https://threejs.org/docs/#api/en/geometries/PlaneGeometry
+const planeGeometry = new THREE.PlaneGeometry( 8, 24 );
+			// https://threejs.org/docs/index.html#api/en/materials/MeshBasicMaterial
+const planeMaterial = new THREE.MeshBasicMaterial( { color: 0x33aa33, side: THREE.DoubleSide } );
+			// https://threejs.org/docs/index.html#api/en/objects/Mesh
+const planeMesh = new THREE.Mesh( planeGeometry, planeMaterial );
+planeMesh.rotation.x = Math.PI / 2; // angle in radians
+planeMesh.position.z = -8;
+planeMesh.position.y = -1;
+scene.add( planeMesh );
+
+			// https://threejs.org/docs/index.html#api/en/objects/Group
+const figure = new THREE.Group( );
+const figureMaterial = new THREE.MeshBasicMaterial( { color: 0xfced98, side: THREE.DoubleSide, wireframe: true } );
+			// https://threejs.org/docs/index.html#api/en/geometries/IcosahedronGeometry
+const headGeometry = new THREE.IcosahedronGeometry( 0.22, 2 );
+			// or	// https://threejs.org/docs/index.html#api/en/geometries/SphereGeometry
+					// const headGeometry = new THREE.SphereGeometry( 0.22, 12, 12 );
+const headMesh = new THREE.Mesh( headGeometry, figureMaterial );
+headMesh.position.y = 0.72;
+figure.add( headMesh );
+			// https://threejs.org/docs/index.html#api/en/geometries/CylinderGeometry
+const bodyGeometry = new THREE.CylinderGeometry( 0.35, 0.25, 1, 12, 3 );
+const bodyMesh = new THREE.Mesh( bodyGeometry, figureMaterial );
+figure.add( bodyMesh );
+
+const armGeometry = new THREE.CylinderGeometry( 0.07, 0.1, 0.5, 8, 2 );
+const armMesh = new THREE.Mesh( armGeometry, new THREE.MeshBasicMaterial( { color: 0xfced98 } ) );
+
+armMesh.rotation.x = Math.PI / 2;
+armMesh.position.set( 0.43, 0.42, 0.25 ); 
+figure.add( armMesh );
+						// EXERCISE: Complete the figure, use also BoxGeometry and others
+
+figure.rotation.y = 0.7; // angle in radians
+figure.position.y = 0.1;
+scene.add( figure );
+
+// ... step 02:  buildt custom geometries ...
+//=================================================================================================
+			// https://threejs.org/docs/index.html#api/en/lights/DirectionalLight
+const directionalLight02 = new THREE.DirectionalLight( 0xffffff, 0.6 );
+directionalLight02.position.set( 0, 20, 15 );
+scene.add( directionalLight02 );
+			// https://threejs.org/docs/index.html#api/en/materials/MeshPhongMaterial
+const flowerMaterial = new THREE.MeshPhongMaterial( { color: 0xcdef00, side: THREE.DoubleSide } ); // requires light
+
+const n = 12; // petals
+const r1 = 0.13;
+const r2 = 0.26;
+const flowerpos = [];
+
+			// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions
+const fx = ( r, i, n ) => ( r * Math.cos( Math.PI * 2 * i / n ) ); // x circle
+const fy = ( r, i, n ) => ( r * Math.sin( Math.PI * 2 * i / n ) ); // y circle
+
+			// https://threejs.org/docs/index.html#api/en/math/Vector3
+const a = new THREE.Vector3( );  
+const b = new THREE.Vector3( );
+const c = new THREE.Vector3( );
+
+for ( let i = 0; i < n; i ++ ) {
+	
+	a.x = fx( r1, i, n );
+	a.y = fy( r1, i, n );
+	a.z = 0;
+	
+	b.x = fx( r1, i + 1, n );
+	b.y = fy( r1, i + 1, n );
+	b.z = 0;
+	
+	c.x = fx( r2, i + 0.5, n );
+	c.y = fy( r2, i + 0.5, n );
+	c.z = 0.05;	
+	
+	flowerpos.push( a.x, a.y, a.z,  b.x, b.y, b.z,  c.x, c.y, c.z ); // triangle
+	
+}	
+			// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays
+const positionsFl = new Float32Array( flowerpos );
+			// https://threejs.org/docs/index.html#api/en/core/BufferGeometry
+const flowerGeometry = new THREE.BufferGeometry( );
+			// https://threejs.org/docs/index.html#api/en/core/BufferAttribute
+			//  no .setIndex, a non-indexed Geometry, so called triangle soup
+flowerGeometry.setAttribute( 'position', new THREE.BufferAttribute( positionsFl, 3 ) );
+flowerGeometry.computeVertexNormals( );				// necessary to determine illumination with ...PhongMaterial
+const flowerMesh = new THREE.Mesh( flowerGeometry, flowerMaterial );
+flowerMesh.position.set( 1.1, 1.24, 0.11 );
+
+scene.add( flowerMesh );
+
+			//  EXERCISE: fill the center of the flower - CircleBufferGeometry or buildt a custom geometry
+
+// ----------------------------------------------------------------------------
+
+const paperplaneMaterial = new THREE.MeshBasicMaterial( { color: 0xededed, side: THREE.DoubleSide, wireframe: true } );
+			// 9 corner points from a sketch
+const pplanePos = [
+  // x    y    z      index
+    0.3, 1.0, 0.0,  //  0
+    0.0, 1.2, 0.0,  //  1
+    0.0, 1.0, 0.0,  //  2
+    0.9, 1.1, 0.1,  //  3
+    0.8, 1.0, 0.0,  //  4
+    0.8,-1.0, 0.0,  //  5
+    0.9,-0.8, 0.1,  //  6
+    0.0,-1.0, 0.0,  //  7
+    0.0,-1.7,-0.0,  //  8
+];
+
+const pplaneIndices = new Uint32Array( [
+    // 6 faces (triangles, counter clockwise)
+    0, 1, 2,
+    2, 7, 4,
+    7, 5, 4,
+    7, 8, 5,
+    5, 3, 4,
+    5, 6, 3
+] );
+
+const paperplaneGeometry = new THREE.BufferGeometry( );	
+paperplaneGeometry.setIndex( new THREE.BufferAttribute( pplaneIndices, 1 ) );
+paperplaneGeometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( pplanePos ), 3 ) );
+const paperplaneMesh1 = new THREE.Mesh( paperplaneGeometry, paperplaneMaterial );
+paperplaneMesh1.scale.set( 0.11, 0.14, 0.14 );
+paperplaneMesh1.position.set( -0.6, 1.4, 0.4 );
+paperplaneMesh1.rotation.x = -1.9;
+scene.add( paperplaneMesh1 );
+
+const paperplaneMesh2 = paperplaneMesh1.clone( );
+paperplaneMesh2.rotation.y = 3.5;
+scene.add( paperplaneMesh2 );
+
+// ... step 03: load 3D models - gltf is recommended https://blackthread.io/gltf-converter/
+//=================================================================================================
+													// https://gltf-viewer.donmccurdy.com/
+			//https://threejs.org/docs/index.html#examples/en/loaders/GLTFLoader
+const loader = new GLTFLoader( );
+
+const modelLh = new THREE.Object3D( );
+loader.load( 'Lighthouse/Lighthouse_01.gltf', function ( gltf ) { //  (CC-BY) Poly by Googl, contains lighting 
+	modelLh.add( gltf.scene ); // this gltf.scene is centered 
+	modelLh.scale.set( 0.4, 0.4, 0.4 ); // because gltf.scene is big
+	modelLh.position.set( 2, -0.99, -18 );
+	scene.add( modelLh );
+	}
+);
+
+// ----------------------------------------------------------------------------
+
+const modelBee = new THREE.Object3D( );
+
+loader.load( 'Kelli Ray_Bee/toi uu.gltf', processBee );
+
+function processBee( gltf ) { // Kelli Ray  (CC-BY) Poly by Googl
+	
+			//https://threejs.org/docs/index.html#api/en/math/Box3
+	const box = new THREE.Box3( ).setFromObject( gltf.scene );
+	const c = box.getCenter( new THREE.Vector3( ) );
+	const size = box.getSize( new THREE.Vector3( ) );
+	gltf.scene.position.set( -c.x, size.y / 2 - c.y, -c.z ); // center the gltf scene
+	modelBee.add( gltf.scene );
+	
+}
+
+modelBee.scale.set( 0.0015, 0.0015, 0.0015 ); // because gltf.scene is very big
+modelBee.position.set( 2.4, 0.2, 0.5 );
+scene.add( modelBee );
+
+// ----------------------------------------------------------------------------
+			// https://threejs.org/docs/index.html#api/en/core/Clock
+const clock = new THREE.Clock( );	// for the rotation of the model - see animate
+let t, tt;							// time
+
+const modelSqu = new THREE.Object3D( );
+loader.load( 'Lowpoly Squirrel by Tipatat Chennavasin/model.gltf', function ( gltf ) { //  (CC-BY) Poly by Google
+	const box = new THREE.Box3( ).setFromObject( gltf.scene );
+					// https://threejs.org/docs/index.html#api/en/helpers/Box3Helper
+	// const boxHelper = new THREE.Box3Helper( box, 0xffff00 );
+	// scene.add( boxHelper ); // see original position of model.gltf, not centered
+	const c = box.getCenter( new THREE.Vector3( ) );
+	const size = box.getSize( new THREE.Vector3( ) );
+	// center the gltf scene - important for modelSqu.rotation.y = t in function animate
+	gltf.scene.position.set( -c.x, size.y / 2 - c.y, -c.z );  // put // in front of this line, try it out 
+	modelSqu.add( gltf.scene ); 
+	modelSqu.position.set( 0.7, -0.99, 0.3 );
+	scene.add( modelSqu );
+	}
+);
+
+// ... step 04: use a texture for the material (see also step 5 ropeMaterial)
+//=================================================================================================
+			// https://threejs.org/docs/index.html#api/en/loaders/TextureLoader
+const texturLoader = new THREE.TextureLoader( );
+const ballTexture = texturLoader.load( 'https://threejs.org/examples/textures/golfball.jpg' );
+const ballMaterial = new THREE.MeshBasicMaterial( { map: ballTexture, wireframe: false } ); // try true
+const ballGeometry = new THREE.SphereGeometry( 0.25, 12, 12 );
+const ballMesh = new THREE.Mesh( ballGeometry, ballMaterial ); // texture is suitable for Sphere Geometry
+ballMesh.position.set( 1.9, -0.75, 2.2 );
+scene.add( ballMesh );
+
+// ----------------------------------------------------------------------------
+ 
+const dicePoints = [ 'dice/1.png', 'dice/6.png', 'dice/3.png', 'dice/4.png','dice/2.png', 'dice/5.png' ];
+const diceMaterials = [ ];
+dicePoints.forEach( png => { diceMaterials.push( new THREE.MeshBasicMaterial( { map: texturLoader.load( png ) } ) ) } );
+const diceGeometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
+const diceMesh = new THREE.Mesh( diceGeometry, diceMaterials ); // textures are suitable for cube
+diceMesh.position.set( -0.5, -0.85, 1 ); 
+diceMesh.rotation.z = -0.3;
+scene.add( diceMesh );
+
+// ----------------------------------------------------------------------------
+			// https://threejs.org/docs/index.html#api/en/textures/VideoTexture  (see video tag in HTML body)
+const videoTexture = new THREE.VideoTexture( video );
+videoTexture.minFilter = THREE.LinearFilter;
+videoTexture.magFilter = THREE.LinearFilter;
+videoTexture.format = THREE.RGBAFormat; // RGBFormat was removed!
+const videoGeometry = new THREE.CircleGeometry( 0.6, 72 ); 
+const videoMaterial = new THREE.MeshBasicMaterial( { map: videoTexture , side: THREE.DoubleSide } );
+const videoMesh = new THREE.Mesh( videoGeometry, videoMaterial );
+videoMesh.scale.set( 1.5, 1, 0 );
+videoMesh.rotation.y = -0.7; // radiant
+videoMesh.position.set( 2.7, -0.3, -1.9 );
+scene.add( videoMesh );						// note startVideo, stopVideo in function animate
+
+// ... step 05: modify standard geometries
+//=================================================================================================
+
+const sandPileGeometry = new THREE.PlaneGeometry( 1.5, 1.5, 24, 24 ); 
+const sandPileMaterial = new THREE.MeshPhongMaterial( { color: 0xeace8e } );
+const sandPileMesh = new THREE.Mesh( sandPileGeometry, sandPileMaterial );
+			// https://github.com/mrdoob/three.js/blob/master/src/geometries/PlaneGeometry.js (line37)
+const planeIndex = ( i, j ) => ( i * 25 + j );
+const deformation = ( i, j ) => ( 0.01 * Math.sqrt( ( i - 12 ) * ( i - 12 ) + ( j - 12 ) * ( j - 12 ) ) );
+
+for ( let ix = 2; ix < 23; ix ++ ) {
+
+	for ( let jy = 2; jy < 23; jy ++ ) {
+											// setZ, is then rotated by x											
+		sandPileGeometry.attributes.position.setZ( planeIndex( ix, jy ), deformation( ix, jy ) );
+		
+	}
+
+}
+
+sandPileGeometry.computeVertexNormals( ); // necessary to determine illumination with ...PhongMaterial
+sandPileGeometry.attributes.position.needsUpdate = true;
+sandPileMesh.rotation.x = -Math.PI / 2;
+sandPileMesh.position.set( 2, -0.99, -1 );
+scene.add( sandPileMesh );
+			// see also .displacementMap   https://threejs.org/docs/index.html#api/en/materials/MeshNormalMaterial
+			// and example https://hofk.de/main/discourse.threejs/2020/displacementMap/displacementMap.html
+
+// ----------------------------------------------------------------------------
+
+const rampGeometry = new THREE.BoxGeometry( 1, 1, 1, 360 );
+rampGeometry.translate( 0.5, 0.5, 0 ); // .translate - https://threejs.org/docs/index.html#api/en/core/BufferGeometry 
+const rampPos = rampGeometry.attributes.position; // .attributes - see also ... /BufferGeometry
+
+const v = new THREE.Vector3();
+const rInner = 2.2;
+const rOuter = 4.5;
+
+for( let i = 0; i < rampPos.count; i++ ){
+	
+	v.fromBufferAttribute( rampPos, i );	
+	const angle = v.x * ( Math.PI * 2 - 0.4 );	
+	const radius = v.z > 0 ? rOuter : rInner;
+	const y = v.y < 0.5 ? v.y : v.y - 0.6 + Math.tan( v.x * Math.PI / 2 - 0.3 );
+	rampPos.setXYZ( i, Math.cos( angle ) * radius, y, -Math.sin( angle ) * radius );
+	
+}
+
+rampGeometry.computeVertexNormals();
+
+const rampMaterial = new THREE.MeshPhongMaterial( { color: 'yellow', wireframe: false } );
+const rampMesh = new THREE.Mesh( rampGeometry, rampMaterial );
+rampMesh.scale.set( 0.3, 0.2 ,0.5 );
+rampMesh.rotation.y = Math.PI / 3;
+rampMesh.position.set( 1.9, -0.99, 2.2 );
+scene.add( rampMesh );
+			// see also https://discourse.threejs.org/t/how-to-create-sine-wave-groove-in-ring-geometry-with-extrudegeometry/23068/5
+
+// --------------- use of MeshStandardMaterial -------------------------------- 
+
+			// https://threejs.org/docs/index.html#api/en/materials/MeshStandardMaterial
+const ropeTexture = texturLoader.load( 'Rope_001_SD/Rope_001_basecolor.jpg' ); // https://3dtextures.me/
+ropeTexture.wrapS = THREE.RepeatWrapping;
+ropeTexture.wrapT = THREE.RepeatWrapping;
+ropeTexture.repeat.set( 5, 220 ); // try other values
+const ropeRoughnessMap = texturLoader.load( 'Rope_001_SD/Rope_001_roughness.jpg' );
+const ropeMaterial =  new THREE.MeshStandardMaterial( {	map: ropeTexture,roughnessMap: ropeRoughnessMap } );
+const ropeGeometry = new THREE.CylinderGeometry(  0.01, 0.01, 2 * Math.PI - 0.2, 18, 144 );
+const ropePos = ropeGeometry.attributes.position;
+ropeGeometry.translate( 1, Math.PI / 2, 0 );
+ 
+for( let i = 0 ; i < ropePos.count; i++ ) { 
+	
+	v.fromBufferAttribute( ropePos, i );
+	ropePos.setXY( i,  Math.cos( v.y ) * v.x,  Math.sin( v.y ) * v.x );
+	
+}
+
+const ropeMesh = new THREE.Mesh( ropeGeometry, ropeMaterial );
+ropeMesh.position.set( -1.4, -0.99, -2.4 );
+ropeMesh.rotation.x = Math.PI / 2;
+scene.add( ropeMesh );
+			// see also https://hofk.de/main/discourse.threejs/2021/CurvedArrowHelper/CurvedArrowHelper.html
+
+// ----------------------------------------------------------------------------
+
+const rTop = 0.4;
+const rBtm = 1.4;
+const rS = 10; // radius of the spiral
+const T = 0.5; // twists of the spiral
+const heightSegments = 100;
+const radialSegments = 16;
+const slope = 32;
+let s = 0;
+const stemGeometry = new THREE.CylinderGeometry( rTop, rBtm, T * Math.PI * 2, radialSegments, heightSegments, true );
+const stemPos = stemGeometry.attributes.position;
+stemGeometry.translate( rS, T * Math.PI, 0 );
+const vS = new THREE.Vector3( );
+const wS = new THREE.Vector3( );
+
+for( let i = 0 ; i < stemPos.count; i++ ) {
+	
+	s = i % ( radialSegments + 1 ) === 0 ? s + radialSegments + 1 : s; // slope
+	vS.fromBufferAttribute( stemPos, i );
+	stemPos.setXYZ( i,  Math.cos( vS.y ) * vS.x,  Math.sin( vS.y ) * vS.x, vS.z + slope * s / heightSegments / radialSegments );
+	
+}
+
+vS.fromBufferAttribute( stemPos, 0 );
+wS.fromBufferAttribute( stemPos, stemPos.count - 1 );
+stemGeometry.translate( 0, 0, - ( wS.z - vS.z ) / 2 );
+stemGeometry.computeVertexNormals( );
+
+const stemMesh = new THREE.Mesh( stemGeometry, new THREE.MeshPhongMaterial( { color: 'green', side: THREE.DoubleSide, wireframe: false } ) );
+stemMesh.scale.set( 0.02, 0.02, 0.02 );
+stemMesh.rotation.set( Math.PI / 2, 0, Math.PI );
+stemMesh.position.set( 0.9, 0.9, 0.11 );
+scene.add( stemMesh );
+			// see also https://hofk.de/main/discourse.threejs/2021/SpiralFromCylinder/SpiralFromCylinder.html
+
+// ... step 06:  shape geometry, extrude geometry, lathe geometry
+//=================================================================================================
+			// https://threejs.org/docs/index.html#api/en/extras/core/Shape
+const shape = new THREE.Shape();
+shape.moveTo( -4, 0 );
+shape.lineTo( -4, 1 );
+for(  let i = 0; i < 72; i ++ ) { shape.lineTo( -4 + i / 9, 1 + 0.2 * Math.cos( i / 2.3 ) ); }
+shape.lineTo( 4, 0 );
+			// https://threejs.org/docs/index.html#api/en/extras/core/Path
+const holePath = new THREE.Path();
+holePath.absellipse( 0, 0.4, 0.4, 0.3, 0, Math.PI * 2 );
+shape.holes.push( holePath ); 
+
+			// https://threejs.org/docs/index.html#api/en/geometries/ShapeGeometry
+const shapeGeometry = new THREE.ShapeGeometry( shape );
+const shapeMaterial = new THREE.MeshBasicMaterial( { color: 'white', side: THREE.DoubleSide, wireframe: true } );
+const shapeMesh = new THREE.Mesh( shapeGeometry, shapeMaterial );
+shapeMesh.position.set( 0, -0.99, -4.02 );
+scene.add( shapeMesh );
+
+// ----------------------------------------------------------------------------
+
+			// https://threejs.org/docs/index.html#api/en/geometries/ExtrudeGeometry
+const wallGeometry = new THREE.ExtrudeGeometry( shape, { depth: 0.2, bevelEnabled: false } );
+const wallMaterial = new THREE.MeshPhongMaterial( { color: 0x977709 } );
+const wallMesh = new THREE.Mesh( wallGeometry, wallMaterial );
+wallMesh.position.set( 0, -0.99, -4 );
+scene.add( wallMesh );
+
+// ----------------------------------------------------------------------------
+
+// https://threejs.org/docs/index.html#api/en/geometries/LatheGeometry
+const flagpolePoints = [ 0.01, 10,  0.2, 9.9,  0.3, 9.7,  0.3, 9.5,  0.1, 9.45,  0.1, 0.5,  1.2, 0.2,  1.2, 0 ];
+const fpPoints = [ ];
+
+for ( let i = 0; i < flagpolePoints.length / 2; i ++ ) {
+	
+	fpPoints.push( new THREE.Vector2( flagpolePoints[ 2 * i ], flagpolePoints[ 2 * i + 1 ] ) );
+	
+}
+
+const flagpoleGeometry = new THREE.LatheGeometry( fpPoints );
+const flagpoleMaterial = new THREE.MeshPhongMaterial( { color: 'gray', side: THREE.DoubleSide, wireframe: false } );
+const flagpoleMesh = new THREE.Mesh( flagpoleGeometry, flagpoleMaterial );
+scene.add( flagpoleMesh );
+flagpoleMesh.scale.set( 0.3, 0.3, 0.3 );
+flagpoleMesh.position.set( -2.75, -0.99, -1.35 );
+ 
+// ... step 07: dynamic geometry
+//=================================================================================================
+			// see functions animate and flagwaving for time variability
+const threeTex = texturLoader.load( 'flag_threejs.png' );
+const flagMaterial = new THREE.MeshBasicMaterial( {
+	map: threeTex,
+	side: THREE.DoubleSide,
+	transparent: true,
+	opacity: 0.92,
+} );
+const flagGeometry = new THREE.PlaneGeometry( 2 , 1 , 40, 20 );
+const flagPos = flagGeometry.attributes.position;
+const flagMesh = new THREE.Mesh( flagGeometry, flagMaterial );
+flagMesh.position.set( -2, 1.3, -2 );
+flagMesh.rotation.y = 0.7;
+scene.add( flagMesh );
+
+// ... step 08: sprite
+//=================================================================================================
+			// https://threejs.org/docs/index.html#api/en/objects/Sprite
+						// https://pixabay.com/de/vectors/sonnenblume-sommer-pflanze-garten-1563432/
+const sfSpriteMap = new THREE.TextureLoader().load( 'sunflowerSabrinaSchleiferPixabayFree.png' );
+const sfSpriteMaterial = new THREE.SpriteMaterial( { map: sfSpriteMap } );
+const sfSprite = new THREE.Sprite( sfSpriteMaterial );
+sfSprite.scale.set( 1.5, 1.5, 1.5 );
+sfSprite.position.set( -3, -0.25, -3 );
+scene.add( sfSprite );
+const sfSprites = [];
+
+for ( let i = 0; i < 4; i ++ ) {
+
+	for ( let j = 0; j < 4; j ++ ) {
+		
+		sfSprites.push( sfSprite.clone( ) );
+		sfSprites[ i * 4 + j ].position.set( j, -0.25, -i - 8 );
+		scene.add( sfSprites[ i * 4 + j ] );
+		
+	}
+	
+}
+
+// ... step 09: Line
+//=================================================================================================
+			// https://threejs.org/docs/index.html#api/en/objects/Line
+					// see also https://hofk.de/main/discourse.threejs/2020/getPoint(%20)/getPoint(%20).html
+					// and https://hofk.de/main/discourse.threejs/2020/getPointAt(%20)/getPointAt(%20).html
+const coord = [
+	-1, -1,
+	 1, -1,
+	-1,  1,
+	-1, -1,
+	 1,  1,
+	-1,  1,
+	 0,  2,
+	 1,  1,
+	 1, -1,
+];
+
+const points = [];
+
+for ( let i = 0; i < coord.length; i += 2 ) {
+	
+	points.push( new THREE.Vector3( coord[ i ], coord[ i + 1 ], 0 ) );
+	
+}
+
+const sheetGeometry = new THREE.PlaneGeometry( 3.5, 5 );
+const sheetMesh = new THREE.Mesh( sheetGeometry, new THREE.MeshBasicMaterial( { color: 'white', side: THREE.DoubleSide } ) );
+
+const lineGeometry = new THREE.BufferGeometry().setFromPoints( points );
+const line = new THREE.Line( lineGeometry, new THREE.LineBasicMaterial( { color: 'black' } ) );
+line.position.y = 0.4;
+line.position.z = 0.01;
+
+sheetMesh.add( line );
+
+sheetMesh.scale.x = 0.2;
+sheetMesh.scale.y = 0.2;
+sheetMesh.rotation.x = -0.37; // radiant
+sheetMesh.position.set( 1, -0.5, -3.6 );
+scene.add( sheetMesh );
+
+// ... step 10: raycaster 
+//=================================================================================================
+			// https://threejs.org/docs/index.html#api/en/core/Raycaster
+const raycaster = new THREE.Raycaster( ); // see function raycasting( ); in animate
+const mouse = new THREE.Vector2( ); // see function onWindowMousemove( event )
+let intersects = []; // array of intersected objects
+			// https://threejs.org/docs/index.html#api/en/geometries/OctahedronGeometry
+const ohGeometry = new THREE.OctahedronGeometry( 0.3 );
+const ohMesh = new THREE.Mesh( ohGeometry, new THREE.MeshPhongMaterial( { color: 0xff0045 } ) );
+scene.add( ohMesh );
+const objs = [ ohMesh, flowerMesh, modelLh, ballMesh, diceMesh, sandPileMesh, rampMesh, stemMesh, flagpoleMesh, flagMesh, sfSprite, sheetMesh ];
+const infos = [ 'octahedron', 'flower', 'lighthouse', 'ball', 'dice', 'sand', 'ramp', 'stem', 'pole', 'three.js', 'sunflower', 'sheet' ]
+let index = 0;
+objs.forEach( obj => { obj.name = infos[ index ]; index ++; } );  // names for some objects
+
+// ... step 11: text 
+//=================================================================================================
+			// https://threejs.org/docs/index.html#examples/en/loaders/FontLoader			
+const textMesh = new THREE.Group( );		
+const fontLoader = new FontLoader( );							// see function createText( loadedFont )
+fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', createText );
+textMesh.scale.set( 0.005, 0.005, 0.005 );
+textMesh.rotation.y = -0.74 // radiant
+textMesh.position.set( 5, 1, 0 );
+scene.add( textMesh );
+
+// ----------------------------------------------------------------------------
+
+			// https://en.wikipedia.org/wiki/Canvas_element   https://threejs.org/docs/#api/en/textures/CanvasTexture
+const cv = document.createElement( 'canvas' );
+cv.width = 1536 //  3 * 512
+cv.height = 512;
+const ctx = cv.getContext( '2d' );
+ctx.fillStyle = '#fefefe'; 
+ctx.fillRect( 0, 0, cv.width, cv.height );
+ctx.fillStyle = '#129912';
+ctx.textAlign = "left";
+ctx.textBaseline = "middle";
+ctx.font = 'bold 6vh Arial';
+			// https://unicode.org/emoji/charts/full-emoji-list.html#1f642 (mark and copy - column Browser)
+ctx.fillText( ' THREE  |                           three.js playground', 0, 0.1 * cv.height );
+ctx.fillText( ' THREE  |                                              ', 0, 0.2 * cv.height );
+ctx.fillText( ' THREE  |            with a flag 🏳, rotating squirrel 🐿, flower 🌻', 0, 0.3 * cv.height );
+ctx.fillText( ' THREE  |                       and many other things  ', 0, 0.4 * cv.height );
+ctx.fillText( ' THREE  |                       * learning by playing * ', 0, 0.5 * cv.height );
+ctx.fillText( ' THREE  |                                              ', 0, 0.6 * cv.height);
+ctx.fillText( ' THREE  |                😀   it should bring you joy     😀', 0, 0.7 * cv.height );
+ctx.fillText( ' THREE  |                                              ', 0, 0.8 * cv.height );
+ctx.fillText( ' THREE  |                  😂    ♠ ♣ ♥ ♦  🐞  ♪ ♫ ♭ ♮ ♯    😂 ', 0, 0.9 * cv.height );
+const txtGeometry = new THREE.BoxGeometry( 2.4, 0.8, 0.1 ); // w 3 : h 1
+const cvTexture = new THREE.Texture( cv );
+cvTexture.needsUpdate = true; // otherwise all black only
+const spineMat = new THREE.MeshPhongMaterial( { color: 0xa5800e } );
+const cvMaterial = new THREE.MeshBasicMaterial( { map: cvTexture  } );
+const cvMaterials = [ spineMat, spineMat, spineMat, spineMat, cvMaterial, cvMaterial ]; 
+const cvTxtMesh = new THREE.Mesh( txtGeometry, cvMaterials );
+cvTxtMesh.rotation.y = 2.4; // radiant
+cvTxtMesh.position.set( -3, -0.59, 3 );
+scene.add( cvTxtMesh );
+
+// ... step 12:   uv mapping 
+//=================================================================================================
+			// https://en.wikipedia.org/wiki/UV_mapping
+const sumNN = ( n ) => ( n * ( n + 1 ) / 2 );		// Sum natural numbers.
+const sumON = ( n ) => ( n * n );					// Sum odd numbers.
+const hTria = ( a ) => ( a / 2 * Math.sqrt( 3 ) );	// Height of triangle.
+
+const logoTex = new THREE.TextureLoader( ).load( 'ThreeLogo.png' ); // hofk, self made, open png (image display)   
+const logoMaterial = new THREE.MeshBasicMaterial( { map: logoTex, side: THREE.DoubleSide, wireframe: false } );
+	 
+const logoGeometry = logo( );	// see function below, open console
+
+const logoMesh = new THREE.Mesh( logoGeometry, logoMaterial );
+logoMesh.scale.set( 3, 3, 3 );
+logoMesh.rotation.y = -0.7; // radiant
+logoMesh.position.set( -2.8, -1, -9 );
+scene.add( logoMesh );
+			// see also https://threejs.org/examples/?q=uv#misc_uv_tests
+			// and e.g. https://github.com/mrdoob/three.js/blob/master/src/geometries/CircleGeometry.js
+
+// ----------------------------------------------------------------------------
+
+const eighthSphereMaterial_1 = new THREE.MeshBasicMaterial( { map: logoTex, side: THREE.DoubleSide } );
+const dahliaTex = new THREE.TextureLoader().load( 'dahlia.png' ); // hofk, self photographed, free
+const eighthSphereMaterial_2 = new THREE.MeshBasicMaterial( { map: dahliaTex, side: THREE.DoubleSide } );
+const eighthSphereGeometry = eighthSphere( 4 ); // see function below, also try higher n
+const eighthSphereMesh_1 = new THREE.Mesh( eighthSphereGeometry, eighthSphereMaterial_1 );
+eighthSphereMesh_1.position.set( -1.4, -0.99, -2.4 );
+eighthSphereMesh_1.rotation.y = Math.PI / 2;
+scene.add( eighthSphereMesh_1 );
+const eighthSphereMesh_2 = new THREE.Mesh( eighthSphereGeometry, eighthSphereMaterial_2 );
+eighthSphereMesh_2.position.set( -1.4, -0.99, -2.4 );
+scene.add( eighthSphereMesh_2 );
+
+// ... step 13:  instanced mesh
+//=================================================================================================
+
+			// https://threejs.org/docs/index.html#api/en/objects/InstancedMesh
+const slatCount = 80;
+const slatWidth = 0.04;
+const slatHeight = 0.95;
+const slatGrid = 0.07;
+const slatGeometry = new THREE.PlaneGeometry( slatWidth, slatHeight );
+const slatMaterial = new THREE.MeshLambertMaterial( { color: 0x897429, side: THREE.DoubleSide } );
+
+const slats = new THREE.InstancedMesh( slatGeometry , slatMaterial, slatCount );
+				// helper matrix
+const M4 = new THREE.Matrix4( );  // https://threejs.org/docs/index.html#api/en/math/Matrix4
+
+for( let instance = 0; instance < slatCount; instance ++ ) {
+	
+	slats.setMatrixAt( instance, M4.setPosition( ( instance - slatCount / 2 ) * slatGrid, 0, 0 ) );
+	
+}
+
+slats.rotation.y = Math.PI / 2;
+slats.position.set( 3.95, -0.45, -1 ) ;
+ 
+scene.add( slats );
+
+// ----------------------------------------------------------------------------
+
+const directionalLight13 = new THREE.DirectionalLight( 0xffffff, 0.4 );
+directionalLight13.position.set( 0, -10, -10 );
+scene.add( directionalLight13 );
+
+const radius = 0.06;
+const rings = 7;
+const thick = 0.004;
+const depth  = 0.16;
+
+const honeyComb = createHoneyComb( radius, rings, thick, depth ); // see function below
+honeyComb.rotation.y = -0.74 // radiant
+honeyComb.position.set( 3.2, -0.3, 0.7 );
+scene.add( honeyComb );
+
+const capsBack = createCaps( radius, rings, thick, depth );  // see function below
+capsBack.rotation.y = -0.74 // radiant
+capsBack.position.set( 3.2, -0.3, 0.7 );
+scene.add( capsBack );
+
+const capsFront = capsBack.clone( ); // see animate: showHideCapsFront( ) 
+tt = 0;
+scene.add( capsFront );
+
+// ... step 14: points, room curve, 
+//=================================================================================================
+ const disc = new THREE.TextureLoader().load( 'disc.png' );  // three.js   /examples/textures/sprites/disc.png'
+ 
+const dotsGeometry = new THREE.BufferGeometry();
+const dotsPositions = [];
+const dotsVec = [];
+
+for ( let i = 0; i < 40; i ++ ) {
+
+	const x = 2.7 * Math.sin( i / 6.4 ) + 1.5;
+	const y = 0.25 * Math.random( ) - 1;
+	const z = 2.7 * Math.cos( i / 6.4 ) - 10;
+
+	dotsPositions.push( x, y, z );
+	dotsVec.push( new THREE.Vector3( x, y, z ) );
+
+}
+
+dotsGeometry.setAttribute( 'position', new THREE.Float32BufferAttribute( dotsPositions, 3 ) );
+const dotsMaterial = new THREE.PointsMaterial( { size: 0.15, sizeAttenuation: true, map: disc, alphaTest: 0.5, transparent: true } );
+dotsMaterial.color.setRGB( 0.9, 0.9, 0.5 );
+				// https://threejs.org/docs/index.html?q=poi#api/en/objects/Points
+const dots = new THREE.Points( dotsGeometry, dotsMaterial ); 
+scene.add( dots );
+				// https://threejs.org/docs/index.html?q=CatmullRomCurve3#api/en/extras/curves/CatmullRomCurve3
+const curve3D = new THREE.CatmullRomCurve3( dotsVec );	
+const curveDots = curve3D.getPoints( 160 );
+const curveLine = new THREE.LineLoop( new THREE.BufferGeometry( ).setFromPoints( curveDots ), new THREE.LineBasicMaterial( { color: 0xffffaa } ) );
+scene.add( curveLine  );
+ 
+
+// ... step 15: matrix, move along room curve, 
+//=================================================================================================
+  
+let tangent;
+const normal0 = new THREE.Vector3( 0, 1, 0 ); //  first up
+const normal = new THREE.Vector3( );
+const binormal = new THREE.Vector3( );
+				// https://threejs.org/docs/index.html?q=matr#api/en/math/Matrix3
+const flightM3 = new THREE.Matrix3( );
+const flightM4 = new THREE.Matrix4( );
+let fraction = 0; // fraction
+let p = new THREE.Vector3( );
+
+ const flightPoints = [
+
+	new THREE.Vector3(  3, 0.4,  1 ),
+	new THREE.Vector3(  1,   1,  2 ),	
+	new THREE.Vector3(  0, 1.8,  3 ),	
+	new THREE.Vector3( -1,   1,  2 ),	
+	new THREE.Vector3( -2, 1.5,  0 ),
+	new THREE.Vector3(  0,   1, -3 ),
+	new THREE.Vector3(  3, 1.5, -5 ),	
+	new THREE.Vector3(  4,   1, -1 ),
+	
+];
+
+const flightCurve = new THREE.CatmullRomCurve3( flightPoints );	
+flightCurve.closed = true;
+ 
+const modelBee1 = new THREE.Object3D( );
+
+loader.load( 'Kelli Ray_Bee/toi uu.gltf', processBee1 );
+
+function processBee1( gltf ) { // Kelli Ray  (CC-BY) Poly by Googl
+	
+	const box = new THREE.Box3( ).setFromObject( gltf.scene );
+	const c = box.getCenter( new THREE.Vector3( ) );
+	const size = box.getSize( new THREE.Vector3( ) );
+	gltf.scene.position.set( -c.x, size.y / 2 - c.y, -c.z ); // center the gltf scene
+	modelBee1.add( gltf.scene );
+	
+} 
+
+modelBee1.scale.set( 0.002, 0.002, 0.002 ); // because gltf.scene is very big
+scene.add( modelBee1 );
+
+//  - step list - 
+//=================================================================================================
+const steps = [													// step
+
+	[ ],														// 00
+	[ planeMesh, headMesh, bodyMesh, armMesh ],					// 01
+	[ flowerMesh, paperplaneMesh1, paperplaneMesh2 ],			// 02
+	[ modelLh, modelBee, modelSqu ],							// 03
+	[ ballMesh, diceMesh, videoMesh ],							// 04
+	[ sandPileMesh, rampMesh, ropeMesh, stemMesh ],				// 05
+	[ shapeMesh, wallMesh, flagpoleMesh ],						// 06
+	[ flagMesh ],												// 07
+	[ sfSprite,
+	 sfSprites[0], sfSprites[1], sfSprites[2], sfSprites[3],
+	 sfSprites[4], sfSprites[5], sfSprites[6], sfSprites[7],
+	 sfSprites[8], sfSprites[9], sfSprites[10], sfSprites[11],
+	 sfSprites[12], sfSprites[13], sfSprites[14], sfSprites[15],
+	],															// 08
+	[ line, sheetMesh ],										// 09
+	[ ohMesh ],													// 10
+	[ textMesh, cvTxtMesh ],									// 11
+	[ logoMesh, eighthSphereMesh_1, eighthSphereMesh_2 ],		// 12
+	[ slats, honeyComb, capsBack, capsFront ],					// 13
+	[ dots, curveLine ],										// 14
+	[ modelBee1 ]												// 15
+	
+]
+
+ 
+animate( ); // - for all steps -
+//=================================================================================================
+
+function animate( ) {
+	
+	requestAnimationFrame( animate ); // recursive loop
+	
+ 	t = clock.getElapsedTime( );
+	
+	modelSqu.rotation.y = t;		// ======== to step 03 ======== 
+	
+									// ======== to step 04 ======== 
+	if ( range.value > 3.5 && range.value < 4.5 ) { startVideo( ) } else { stopVideo( ) } // only step 04
+	
+	flagwaving( t );				// ======== to step 07 ========
+	
+	raycasting( );					// ======== to step 10 ========
+	
+									// ======== to step 13 ========
+	if ( range.value > 12.5 && range.value < 13.5  ) {		// only step 13		 
+		tt += 1;
+		if ( tt % 100 === 0 ) showHideCapsFront( );		
+	}
+									// ======== to step 15 ========
+	beeFlight( );					 
+	
+									// ==============================
+	
+	renderer.render( scene, camera );
+	
+	controls.update( );
+	
+	showStepItems( range.value ); //  helper function to show the step items
+	
+} // ----- end of animate -----
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  functions to steps  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// ======= to step 04 ============
+
+function startVideo( ) {
+
+	video.play( );
+
+}
+
+function stopVideo( ) {
+	
+	video.pause( );
+	video.currentTime = 0;
+	
+}
+
+// ======= to step 07 ============
+
+function flagwaving( t ) {
+	
+	const v = new THREE.Vector3( );
+	
+	for( let i = 0; i < flagPos.count; i ++ ) {
+		
+		v.fromBufferAttribute( flagPos, i );
+		flagPos.setZ( i, 0.2 * Math.sin( 1.5 * t ) * Math.sin( i % 41 / 5 ) );
+		
+	}
+	
+	flagPos.needsUpdate = true;
+	
+}
+
+// ======= to step 10 ============
+
+function raycasting( ) {
+	
+	if( range.value > 9.5 && range.value < 10.5  ) { // only step 10 
+		
+		raycaster.setFromCamera( mouse, camera );
+		intersects = raycaster.intersectObjects( objs ); // objs - objects to raycast
+		
+		if ( intersects.length > 0 ) { // hit
+			
+			info.style.fontSize = '5vh';
+			info.style.color = 'white';
+			info.innerHTML = ' you got a hit => ' + intersects[ 0 ].object.name; //  ...[ 0 ]  first intersected object
+			ohMesh.material.color.setHex( 0x4500ff );
+			
+		} else {
+			
+			info.style.fontSize = '1.9vh';
+			info.style.color = 'black';
+			info.innerHTML = 'Beginner Example';
+			ohMesh.material.color.setHex( 0xff0045 );
+			
+		}
+		
+	}
+	
+}
+
+// ======= to step 11 ============
+
+function createText( loadedFont ) {
+	
+	const textMaterial = new THREE.MeshPhongMaterial( { color: 0x0033ff, specular: 0x444444, shininess: 20 } );
+	
+	const textGeometry = new TextGeometry( 'three.js \nexample', {
+		
+		font: loadedFont,
+		size: 70,
+		height: 4,
+		curveSegments: 10,
+		bevelEnabled: true,
+		bevelThickness: 8,
+		bevelSize: 8,
+		bevelSegments: 5
+		
+	});
+	
+	textGeometry.center(); // otherwise position left side
+	
+	const tMesh = new THREE.Mesh( textGeometry, textMaterial );
+	
+	textMesh.add( tMesh );
+	
+}
+
+// ======= to step 12 ============
+
+function logo( n ) {
+	
+	n = n || 4;
+	
+	const g = new THREE.BufferGeometry( );
+	
+	const vertexCount = sumNN( n + 1 );
+	const faceCount = sumON( n );
+	
+	g.faceIndices = new Uint32Array( faceCount * 3 );
+	g.vertices = new Float32Array( vertexCount * 3 );
+	g.uvs = new Float32Array( vertexCount * 2 );
+	
+	g.setIndex( new THREE.BufferAttribute( g.faceIndices, 1 ) );
+	g.setAttribute( 'position', new THREE.BufferAttribute( g.vertices, 3 ) );
+	g.setAttribute( 'uv', new THREE.BufferAttribute( g.uvs, 2 ) );
+	
+	indices( g, n );
+	vertices( n );
+	uvs( g, n );
+	
+	console.log( '  >>> to step 12 logo <<< ' );
+	console.log( 'g.faceIndices', g.faceIndices ); // open console
+	console.log( 'g.vertices', g.vertices );
+	console.log( 'g.uvs', g.uvs );
+	
+	return g;
+	
+	function vertices( n ) {
+		
+		let x, y;
+		let posIdx = 0;	// position index
+			
+		for ( let i = 0 ; i <= n; i ++ ) {
+			
+			y =  hTria( 1 ) * ( 1 -  i / n );
+			
+			for ( let j = 0; j <= i ; j ++ ) {
+				
+				x = -i / n / 2 + j / n;
+				
+				g.vertices[ posIdx     ] = x;
+				g.vertices[ posIdx + 1 ] = y;
+				g.vertices[ posIdx + 2 ] = 0;
+				
+				posIdx += 3;
+				
+			}
+			
+		}
+		
+	}
+
+}
+
+function eighthSphere( n ) { 
+
+	n = n || 4;
+	
+	const g = new THREE.BufferGeometry( );
+	
+	const vertexCount = sumNN( n + 1 );
+	const faceCount = sumON( n );
+	
+	g.faceIndices = new Uint32Array( faceCount * 3 );
+	g.vertices = new Float32Array( vertexCount * 3 );
+	g.uvs = new Float32Array( vertexCount * 2 );
+	
+	g.setIndex( new THREE.BufferAttribute( g.faceIndices, 1 ) );
+	g.setAttribute( 'position', new THREE.BufferAttribute( g.vertices, 3 ) );
+	g.setAttribute( 'uv', new THREE.BufferAttribute( g.uvs, 2 ) );
+		
+	indices( g, n );
+	vertices( n );
+	uvs( g, n );
+	
+	return g;
+	
+	function vertices( n ) {
+		
+		let x, y, z, len;		
+
+		let posIdx = 0;	// position index
+		
+		for ( let i = 0 ; i <= n; i ++ ) {
+			
+			y =  1 -  i / n;
+			
+			for ( let j = 0; j <= i ; j ++ ) {
+				
+				x = ( i -  j ) / n;
+				z = j / n;
+				
+				len = Math.sqrt( x * x + y * y + z * z ); // to normalize
+				
+				g.vertices[ posIdx     ] = -x / len;
+				g.vertices[ posIdx + 1 ] =  y / len;
+				g.vertices[ posIdx + 2 ] =  z / len;
+				
+				posIdx += 3;	
+						
+			}
+			
+		}
+		
+	}
+	
+ }
+ 
+function indices( g, n ) {
+	
+	let a0, a1, b0, b1;	// indices
+	let fIdx = 0;		// face index
+	
+	a0 = 0; // start vertex index
+	
+	for ( let i = 0; i < n; i ++ ) {
+		
+		a1 = a0 + 1;
+		b0 = a0 + i + 1; 
+		b1 = b0 + 1;
+
+		// each two faces from left
+		
+		for ( let j = 0; j < i; j ++ ) { // means not for i is 0 
+		
+			g.faceIndices[ fIdx     ] = j + a0;			// left face
+			g.faceIndices[ fIdx + 1 ] = j + b0;
+			g.faceIndices[ fIdx + 2 ] = j + b1;
+			
+			g.faceIndices[ fIdx + 3 ] = j + a0;			// right face
+			g.faceIndices[ fIdx + 4 ] = j + b1;
+			g.faceIndices[ fIdx + 5 ] = j + a1;	
+			
+			fIdx += 6;
+			
+		}
+	
+		g.faceIndices[ fIdx     ] = i + a0;	// last face in row ( like a left face )
+		g.faceIndices[ fIdx + 1 ] = i + b0;
+		g.faceIndices[ fIdx + 2 ] = i + b1;
+		
+		fIdx += 3;
+		
+		a0 += i + 1; // next start index
+		
+	}
+
+}
+	
+function uvs( g, n ) {
+
+	const d = 1 / n;		
+	let u;
+	let v = 1;
+	let uvIdx = 0;	// uv index
+	
+	for ( let i = 0 ; i <= n; i ++ ) {
+		
+		u = 0.5 - i * d / 2  ; // left vertex in row
+		
+		for ( let j = 0; j <= i ; j ++ ) {
+			
+			g.uvs[ uvIdx ] = u;
+			g.uvs[ uvIdx + 1 ] = v;
+			
+			uvIdx  += 2;
+			
+			u += d; // from left to right
+			
+		}
+		
+		v -= d;
+		
+	}
+	
+}
+
+// ======= to step 13 ============
+
+function createCaps( radius, rings, thick, depth ) {
+	
+	radius = radius || 0.5;	// radius of corner points, size of a single outer hexagon, see createHoneyComb( )
+	rings = rings || 6;		// rings of hexagons around the central hexagon
+	thick = thick || 0.1;	// wall thick ( per cell, to calculate interior hexagon, caps )
+	depth = depth || 1;		// depth ( of cell, to calculate z of position )
+	
+	const rt = radius - thick / Math.cos( Math.PI / 3);		// radius of corner points of interior hexagon
+	
+	const hexagonCount = 3 * rings * rings + 3 * rings + 1;
+	
+	const capGeometry = new THREE.CircleGeometry( rt, 6, Math.PI / 6 );
+	const capMaterial = new THREE.MeshLambertMaterial( { color: 0xffff33, side: THREE.DoubleSide, wireframe: false } );
+	
+	const caps = new THREE.InstancedMesh( capGeometry , capMaterial, hexagonCount );
+	
+	positionHexagonInstance( caps, radius, rings, -depth / 2 );
+	
+	return caps;
+	
+}
+
+function createHoneyComb( radius, rings, thick, depth ) {
+		
+	radius = radius || 0.5;	// radius of corner points, size of a single outer hexagon
+	rings = rings || 6;		// rings of hexagons around the central hexagon
+	thick = thick || 0.1;	// wall thick ( per cell, to calculate interior hexagon, caps )
+	depth = depth || 1;		// depth ( of cell, to calculate z of position )
+	
+	const hexagonCount = 3 * rings * rings + 3 * rings + 1;
+	
+	const hexagonGeometry = new THREE.BufferGeometry( );
+	const indices = new Uint32Array( 108 );
+	const positions = new Float32Array( 84 );
+	hexagonGeometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
+	hexagonGeometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	
+	let x, y;
+	const z = depth / 2;
+	
+	makeHexagonPositions( );
+	makeHexagonIndices( );
+		
+	hexagonGeometry.computeVertexNormals( );
+	const hexagonMaterial = new THREE.MeshLambertMaterial( {color: 'yellow', side: THREE.DoubleSide, wireframe: false } ); 
+	
+		//const hexagonMesh = new THREE.Mesh( hexagonGeometry, hexagonMaterial );	// a single only
+	
+	const honeyComb	= new THREE.InstancedMesh( hexagonGeometry, hexagonMaterial, hexagonCount );
+	
+	positionHexagonInstance( honeyComb, radius, rings, 0 );
+	
+	return honeyComb;
+	
+	function makeHexagonPositions( ) {
+		
+		const rt = radius - thick / Math.cos( Math.PI / 3);	// radius of corner points of interior hexagon
+		
+		let cv, sv;
+		
+		for( let i = 0; i < 7; i ++ ) {
+			
+			cv = Math.cos( ( 2 * i + 1 ) *  Math.PI / 6 );
+			sv = Math.sin( ( 2 * i + 1 ) *  Math.PI / 6 );
+			
+			x = rt * cv;
+			y = rt * sv;
+			
+			positions[ i * 12      ] =  x;
+			positions[ i * 12 +  1 ] =  y;
+			positions[ i * 12 +  2 ] = -z;
+			
+			positions[ i * 12 +  3 ] =  x;
+			positions[ i * 12 +  4 ] =  y;
+			positions[ i * 12 +  5 ] =  z;
+			
+			x = radius * cv;
+			y = radius * sv;
+			
+			positions[ i * 12 +  6 ] =  x;
+			positions[ i * 12 +  7 ] =  y;
+			positions[ i * 12 +  8 ] = -z;
+			
+			positions[ i * 12 +  9 ] =  x;
+			positions[ i * 12 + 10 ] =  y;
+			positions[ i * 12 + 11 ] =  z;
+			
+		}
+	
+	}
+	
+	function makeHexagonIndices( ) {
+		
+		for( let i = 0; i < 6; i ++ ) {
+			
+			indices[ i * 18      ] = 4 * i + 1;  // interior
+			indices[ i * 18 +  1 ] = 4 * i + 4;
+			indices[ i * 18 +  2 ] = 4 * i;
+			
+			indices[ i * 18 +  3 ] = 4 * i + 1;
+			indices[ i * 18 +  4 ] = 4 * i + 5;
+			indices[ i * 18 +  5 ] = 4 * i + 4;
+			
+			indices[ i * 18 +  6 ] = 4 * i;	// back
+			indices[ i * 18 +  7 ] = 4 * i + 6;
+			indices[ i * 18 +  8 ] = 4 * i + 2;
+			
+			indices[ i * 18 +  9 ] = 4 * i;
+			indices[ i * 18 + 10 ] = 4 * i + 4;
+			indices[ i * 18 + 11 ] = 4 * i + 6;
+			
+			indices[ i * 18 + 12 ] = 4 * i + 3; // front
+			indices[ i * 18 + 13 ] = 4 * i + 5;
+			indices[ i * 18 + 14 ] = 4 * i + 1;
+			
+			indices[ i * 18 + 15 ] = 4 * i + 3;
+			indices[ i * 18 + 16 ] = 4 * i + 7;
+			indices[ i * 18 + 17 ] = 4 * i + 5;
+			
+		}
+		
+	}
+	
+}
+
+function positionHexagonInstance( iMesh, radius, rings, z ) {
+	
+	const M4 = new THREE.Matrix4( );
+	
+	const ri = radius * Math.sqrt( 3 ) / 2;	// inner radius of a single outer hexagon
+	
+	let  x, y;
+	
+	let h = 0; // hexagon instances
+	
+	for ( let sg = -1; sg < 2; sg ++ ) {
+		
+		const rg0 = sg === 0 ? rings : 0;
+		
+		for( let i = 1, k = 2 * rings + 1 - Math.abs( sg ); k > rings + rg0; i ++, k -- ) {
+			
+			x = ri * ( 1 - k );
+			y = sg * 1.5 * radius * i;
+			
+			for( let j = 0 ; j < k; j ++ ) {
+				
+				x += ri * 2;
+				
+				iMesh.setMatrixAt( h, M4.setPosition( x, y, z ) );
+				
+				h ++;
+				
+			}
+			
+		}
+		
+	}
+
+}	
+
+function showHideCapsFront( ) {
+	
+	const showCapsFront = depth / 2;
+	const hideCapsFront = -Infinity;
+	let sh;
+	
+	let M4 = new THREE.Matrix4( );
+	const position = new THREE.Vector3( );
+	const quaternion = new THREE.Quaternion( ); // not used
+	const scale = new THREE.Vector3( );  // not used
+	
+	for ( let i = 0; i < capsFront.count; i ++ ) {
+		
+		sh = Math.random( ) < 0.3 ? showCapsFront : hideCapsFront;
+		
+		capsFront.getMatrixAt( i, M4 );
+		M4.decompose( position, quaternion, scale );
+		capsFront.setMatrixAt( i, M4.setPosition( position.x, position.y, sh ) );
+		capsFront.instanceMatrix.needsUpdate = true;
+		
+	}
+	
+}
+
+// ======= to step 15 ============
+
+function beeFlight( ) {
+	
+	if ( fraction === 0 || fraction > 1 ) {
+	
+		normal.copy( normal0 );		
+		fraction = 0; // loop
+		
+	}
+	
+	fraction += 0.0007;
+	
+	tangent = flightCurve.getTangent( fraction );
+	binormal.crossVectors( tangent, normal );
+	normal.crossVectors( tangent, binormal.negate( ) );
+	
+			// -tangent, normal, binormal -> otherwise bee in wrong direction
+	//flightM3.set( -tangent.x, -tangent.y, -tangent.z,  normal.x, normal.y, normal.z,  binormal.x, binormal.y, binormal.z ); 
+	//flightM4.setFromMatrix3( flightM3.transpose( ) );
+	
+	flightM3.set( -tangent.x, normal.x, binormal.x,  -tangent.y, normal.y, binormal.y,  -tangent.z, normal.z, binormal.z ); // transposed arranged 
+	flightM4.setFromMatrix3( flightM3 );
+	 
+	p = flightCurve.getPoint( fraction );
+
+	modelBee1.setRotationFromMatrix( flightM4 );
+	modelBee1.position.set( p.x, p.y, p.z );
+	
+}
+
+
+// ..................... helper functions ................. 
+
+function showStepItems( step  ) {
+
+	const show = ( item ) => ( item.visible = true );
+	const hide = ( item ) => ( item.visible = false );
+	
+	for ( let i = 0; i < steps.length; i ++ ) {
+		
+		if( step >= i ) {
+		
+			for ( let j = 0; j < steps[ i ].length; j ++ ) {
+			
+				show( steps[ i ][ j ] );
+				if ( step > 10 ) hide( steps[ 10 ][ 0 ] );
+				
+			}
+			
+		} else {
+			
+			for ( let j = 0; j < steps[ i ].length; j ++ ) {
+			
+				hide( steps[ i ][ j ] );
+			
+			}
+		
+		}
+	
+	}
+	
+}	
+
+function createNumbers( n ) {
+
+	for ( let i = 1; i < n; i ++ ){ 
+		
+		createN( i, n );
+		
+	}
+	
+}
+
+function createN( i, n ) {
+
+	const elm = document.createElement( 'span' );
+	elm.style.position = 'absolute';
+	elm.style.top = 3 + 'vh'
+	elm.style.left =  100 * ( i - 0.07 ) / n + 'vw';
+	elm.style.width = 16 + 'px';
+	elm.innerHTML = i < 10 ? '0'+ i : i;
+	container.appendChild( elm );
+
+}
+
+function onWindowMousemove( event ) {
+
+	// calculate mouse position in normalized device coordinates
+	// (-1 to +1) for both components
+
+	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+}
+
+function onWindowResize() {
+
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize( innerWidth, innerHeight );
+
+}
+ 
+</script>
+
+</html>
